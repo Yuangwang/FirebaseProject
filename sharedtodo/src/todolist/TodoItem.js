@@ -1,54 +1,81 @@
-import { useState, useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
+import { initializeApp } from 'firebase/app';
+import { firebaseConfig } from '../configs';
+import { getDatabase, onValue } from 'firebase/database';
 import { uploadBytesResumable, ref, getDownloadURL } from 'firebase/storage'
+import { ref as dref } from 'firebase/database'
+import styled from 'styled-components';
+import Form from 'react-bootstrap/Form';
+import Button from 'react-bootstrap/Button';
+import ProgressBar from 'react-bootstrap/ProgressBar';
+import "./styles.css";
 
-function TodoItem({ storage, itemKey, items, editedItem, setEditedItem, setEditingItem, markItemChecked, deleteItem }) {
-    const inputFile = useRef(null)
+
+
+
+const TodoItemWrapper = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top:20px;
+`
+const IconsWrapper = styled.div`
+margin-left: auto;
+`
+const StyledForm = styled.form`
+display:flex;
+
+`
+
+function TodoItem({ storage, itemKey, items, editedItem, setEditedItem, setEditingItem, markItemChecked, deleteItem, listKey }) {
+    const inputFile = useRef(null);
+    const [uploadProgress, setUploadProgress] = useState(-1);
+
+
     const handleSubmit = (e) => {
         e.preventDefault()
         const file = inputFile?.current?.files[0];
         if (!file) return;
-        const storageRef = ref(storage, `images/${itemKey}`);
-        const uploadTask = uploadBytesResumable(storageRef, file);
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
 
-        uploadTask.on('state_changed',
-            (snapshot) => {
-                // Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
-                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                console.log('Upload is ' + progress + '% done');
-                switch (snapshot.state) {
-                    case 'paused':
-                        console.log('Upload is paused');
-                        break;
-                    case 'running':
-                        console.log('Upload is running');
-                        break;
+        // Get a reference to the database service
+        const db = getDatabase(app);
+        const accessorsRef = dref(db, `lists/${listKey}/accessors`);
+        onValue(accessorsRef, (snapshot) => {
+            const data = snapshot.val();
+            const storageRef = ref(storage, `images/${itemKey}`);
+            const metadata = {
+                customMetadata: {
+                    ...data
                 }
-            },
-            (error) => {
-                // A full list of error codes is available at
-                // https://firebase.google.com/docs/storage/web/handle-errors
-                switch (error.code) {
-                    case 'storage/unauthorized':
-                        // User doesn't have permission to access the object
-                        break;
-                    case 'storage/canceled':
-                        // User canceled the upload
-                        break;
+            };
+            const uploadTask = uploadBytesResumable(storageRef, file, metadata);
 
-                    // ...
 
-                    case 'storage/unknown':
-                        // Unknown error occurred, inspect error.serverResponse
-                        break;
+            uploadTask.on('state_changed',
+                (snapshot) => {
+                    // Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
+                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                    console.log('Upload is ' + progress + '% done');
+                    setUploadProgress(progress)
+                },
+                (error) => {
+                },
+                () => {
+                    getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+                        console.log('File available at', downloadURL);
+                    });
+                    setUploadProgress(100);
+
+                    setTimeout(() => {
+                        setUploadProgress(-1); window.location.reload()
+                    }, 500)
                 }
-            },
-            () => {
-                // Upload completed successfully, now we can get the download URL
-                getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-                    console.log('File available at', downloadURL);
-                });
-            }
-        );
+            );
+        }, {
+            onlyOnce: true
+        });
     }
     useEffect(() => {
         const imageRef = ref(storage, `images/${itemKey}`);
@@ -58,48 +85,44 @@ function TodoItem({ storage, itemKey, items, editedItem, setEditedItem, setEditi
                 img.setAttribute('src', url);
             })
             .catch((error) => {
-                // A full list of error codes is available at
-                // https://firebase.google.com/docs/storage/web/handle-errors
-                switch (error.code) {
-                    case 'storage/object-not-found':
-                        // File doesn't exist
-                        break;
-                    case 'storage/unauthorized':
-                        // User doesn't have permission to access the object
-                        break;
-                    case 'storage/canceled':
-                        // User canceled the upload
-                        break;
-
-                    // ...
-
-                    case 'storage/unknown':
-                        // Unknown error occurred, inspect the server response
-                        break;
-                }
             });
     }, [])
 
     return (
-        <li key={itemKey}>
-            {items[itemKey].editing ? "being edited..." : <>
-                <input type="checkbox" checked={items[itemKey].checked} onChange={() => markItemChecked(itemKey, !items[itemKey].checked)} />
-                {items[itemKey].name}
-                <button onClick={() => {
-                    if (editedItem != null) {
-                        setEditingItem(editedItem, false)
-                    }
-                    setEditingItem(itemKey, true)
-                    setEditedItem(itemKey)
-                }}>edit</button>
-                <button onClick={() => {
-                    deleteItem(itemKey)
-                }}>delete</button>
-                <form onSubmit={handleSubmit}>
-                    <input type='file' id='file' ref={inputFile} />
-                    <button type='submit'>Upload</button>
-                </form>
-                <img id={`${itemKey}image`} />
+        <li style={{ "list-style": "none" }} key={itemKey}>
+            {items[itemKey].editing ? <div class="typingIndicatorContainer">
+                <div class="typingIndicatorBubble">
+                    <div class="typingIndicatorBubbleDot"></div>
+                    <div class="typingIndicatorBubbleDot"></div>
+                    <div class="typingIndicatorBubbleDot"></div>
+                </div>
+            </div> : <>
+                <TodoItemWrapper >
+                    <Form.Check style={{ color: "black" }} checked={items[itemKey].checked} onChange={() => markItemChecked(itemKey, !items[itemKey].checked)} />
+                    {items[itemKey].name}
+                    <IconsWrapper >
+                        <Button variant="light" onClick={() => {
+                            if (editedItem != null) {
+                                setEditingItem(editedItem, false)
+                            }
+                            setEditingItem(itemKey, true)
+                            setEditedItem(itemKey)
+                        }}>edit</Button>
+                        <Button variant="light" onClick={() => {
+                            deleteItem(itemKey)
+                        }}>delete</Button>
+                    </IconsWrapper>
+                </TodoItemWrapper>
+                <StyledForm onSubmit={handleSubmit}>
+                    <Form.Group controlId="formFile">
+                        <Form.Control type="file" ref={inputFile} />
+                    </Form.Group>
+                    <Button variant="light" type='submit'>Upload</Button>
+
+                </StyledForm>
+                {uploadProgress !== -1 && <ProgressBar now={uploadProgress} />}
+
+                <img id={`${itemKey}image`} style={{ width: "400px", height: "auto" }} />
             </>}
         </li>);
 }

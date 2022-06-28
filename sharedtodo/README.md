@@ -75,7 +75,13 @@ It is strange that web offline is not supported in RTDB since ios/android are bo
 Overall very easy to use RTDB
 Small improvement to RTDB docs - could explain the reference (ref) similar to how storage explains it too
 Would be nice for storage to have a live updated console without the need to refresh
-Firestore are formatted very differently from RTDB, feels a bit strange
+Firestore docs are formatted very differently from RTDB, feels a bit strange
 Firebase cloud storage pricing is a little ambiguous, hard to tell where the cutoff is for what a download is based on docs (does listing the items count? does using the exists function count? does a failed download count?)
 Firebase storage could use a clean way to only download if exist, current iteration adds 404 into the console
 When using two firebase products at once, its easy to accidently have functions names collide eg. ref from RTDB and cloud storage, might be helpful to note this as it is easy to miss
+nit: Readme for recurity rules not converted to webpage version 9 syntax yet
+nit: security rules doc shifts the ordering of RTDB/Cloud storage in the docs
+would be nice to cross reference between rtdb and cloud storage rules
+Cross product examples/docs would be useful, for example its easy to miss that storage and rtdb both have different ref, also not sure how to do operations atomically accross products
+There is no way to do atomic transactions between RTDB and cloud storage
+No way to do rules across rtdb and firebase cloud storage

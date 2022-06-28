@@ -1,16 +1,20 @@
 import { useState } from 'react';
+import Button from 'react-bootstrap/Button';
+import Form from 'react-bootstrap/Form'
 
 function EditingItem({ itemKey, items, setEditingItem, setEditedItem, editListItemName }) {
     const [newName, setNewName] = useState(items[itemKey].name)
     return (
-        <li key={itemKey}>
+        <li style={{ "list-style": "none", "margin": "20px" }} key={itemKey}>
             <>
-                <input value={newName} onChange={(e) => setNewName(e.currentTarget.value)} />
-                <button onClick={() => {
+                <Form.Group style={{ "margin-bottom": "10px" }}>
+                    <Form.Control placeholder="Enter new item name" value={newName} onChange={(e) => setNewName(e.currentTarget.value)} />
+                </Form.Group>
+                <Button variant="light" onClick={() => {
                     setEditingItem(itemKey, false)
                     setEditedItem(null)
                     editListItemName(itemKey, newName)
-                }}>done</button>
+                }}>done</Button>
             </>
         </li>);
 }
