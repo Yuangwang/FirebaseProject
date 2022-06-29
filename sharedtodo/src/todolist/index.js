@@ -65,11 +65,11 @@ function TodoList() {
     const currentItemRef = ref(db, `lists/${listKey}/items/${itemKey}`);
     const imageRef = sRef(storage, `images/${itemKey}`);
     remove(currentItemRef);
-    // deleteObject(imageRef).then(() => {
-    //   // File deleted successfully
-    // }).catch((error) => {
-    //   // Uh-oh, an error occurred!
-    // });
+    deleteObject(imageRef).then(() => {
+      // File deleted successfully
+    }).catch((error) => {
+      // Uh-oh, an error occurred!
+    });
 
   }
   useEffect(() => {
