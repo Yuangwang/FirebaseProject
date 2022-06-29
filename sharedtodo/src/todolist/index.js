@@ -9,6 +9,7 @@ import NewItem from '../common/NewItem'
 import { useLocation } from 'react-router-dom'
 import ShareList from './ShareList';
 import styled from 'styled-components'
+import ListGroup from 'react-bootstrap/ListGroup'
 
 
 const ListWrapper = styled.div`
@@ -41,6 +42,7 @@ function TodoList() {
   const [items, setItems] = useState([]);
   const [isloading, setIsloading] = useState(true);
   const [editedItem, setEditedItem] = useState()
+  const [accessors, setAccessors] = useState();
 
   const setEditingItem = useCallback((itemKey, editing) => {
     const todoItemCheckedRef = ref(db, `lists/${listKey}/items/${itemKey}/editing`)
@@ -95,6 +97,20 @@ function TodoList() {
       }
       setIsloading(false);
     });
+    const accessorsRef = ref(db, `lists/${listKey}/accessors`);
+    onValue(accessorsRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data == null) {
+        setAccessors([]);
+      } else {
+        const accountsToEmailRef = ref(db, `accounts_to_email`);
+        onValue(accountsToEmailRef, (snapshot) => {
+          const accountsToEmail = snapshot.val();
+
+          setAccessors(Object.keys(data).map(key => accountsToEmail[key].replaceAll(",", ".")))
+        });
+      }
+    });
   }, [db])
 
   return (
@@ -142,6 +158,13 @@ function TodoList() {
             editedItem={editedItem}
             setEditedItem={setEditedItem} />
           <ShareList items={items} listKey={listKey} listName={listName} />
+          <div>Shared with:</div>
+          {accessors &&
+            <ListGroup>
+              {accessors.map(name => <ListGroup.Item>{name}</ListGroup.Item>)}
+
+            </ListGroup>
+          }
         </>
 
       }

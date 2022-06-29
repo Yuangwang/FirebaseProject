@@ -74,7 +74,7 @@ function UsersLists({ uid }) {
                   return <ListItem listKey={listKey} name={usersLists[listKey].name} collaborators={usersLists[listKey].accessors} />
                 })}
                 <div>
-                  <Card style={{ height: '12rem', width: '18rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Card style={{ height: '8rem', width: '18rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <NewItem addNewItem={addNewList} />
                   </Card>
                 </div>
