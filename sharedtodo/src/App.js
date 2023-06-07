@@ -3,40 +3,24 @@ import { Routes, Route } from "react-router-dom";
 import UsersLists from "./userslists";
 import LoginPage from "./loginpage";
 import { useState } from "react"
-import { initializeApp } from 'firebase/app';
-import { getAuth, onAuthStateChanged } from "firebase/auth";
-import { firebaseConfig } from "./configs"
-import { getDatabase, ref, set } from "firebase/database";
+import { setupFirebaseAndUID } from "./firebaseUtils";
 import TodoList from "./todolist";
 
-export const FirebaseContext = React.createContext();
+export const ServerContext = React.createContext();
 function App() {
 
+    // UID is used to track the user logged in with auth
     const [uid, setUID] = useState(null);
-    const app = initializeApp(firebaseConfig);
-    const FirebaseContext = React.createContext();
-
-    const auth = getAuth(app);
-    const db = getDatabase(app)
-
-
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            setUID(user.uid);
-            set(ref(db, 'accounts/' + user.email.replaceAll(".", ",")), user.uid);
-            set(ref(db, 'accounts_to_email/' + user.uid), user.email.replaceAll(".", ","));
-        } else {
-            setUID(null);
-        }
-    });
+    // setupFirebaseAndUID uses firebase to get a UID and sets it properly in the database
+    const {db, auth, storage} = setupFirebaseAndUID({setUID});
     return (
-        <FirebaseContext.Provider value={{ db, auth }}>
+        <ServerContext.Provider value={{ db, auth, storage }}>
             <Routes>
                 <Route path="/" element={<LoginPage uid={uid} setUID={setUID} />} />
                 <Route path="/signedIn" element={<UsersLists uid={uid} setUID={setUID} />} />
                 <Route path="/todoList" element={<TodoList uid={uid} />} />
             </Routes>
-        </ FirebaseContext.Provider>
+        </ ServerContext.Provider>
     );
 }
 

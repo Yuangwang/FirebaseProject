@@ -1,44 +1,15 @@
-import { useState } from 'react';
-import { firebaseConfig } from "../configs"
-import { initializeApp } from 'firebase/app';
-import { getDatabase, onValue, ref, update } from "firebase/database"
-import { getStorage, ref as sRef, updateMetadata } from "firebase/storage";
+import { useState, useContext } from 'react';
 import Button from 'react-bootstrap/Button'
 import Form from 'react-bootstrap/Form'
+import { ServerContext } from '../App';
+import { updateAccessorFirebase } from '../firebaseUtils';
 
 
 function ShareList({ items, listKey, listName }) {
+    const { db, storage } = useContext(ServerContext);
     const [inputEmail, setInputEmail] = useState("")
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-    const storage = getStorage(app);
     const updateAccessors = (email) => {
-        const commaEmail = email.replaceAll(".", ",")
-        onValue(ref(db, `accounts/${commaEmail}`), (snapshot) => {
-            const shareToUid = snapshot.val();
-            if (shareToUid != null) {
-
-                Object.keys(items).forEach((item) => {
-                    const pictureRef = sRef(storage, `images/${item}`);
-                    const newUserAccess = {
-                        customMetadata: {
-                            [shareToUid]: true
-                        }
-                    };
-                    updateMetadata(pictureRef, newUserAccess);
-                })
-
-
-
-                const updates = {};
-                updates[`/users/${shareToUid}/lists/${listKey}`] = { name: listName };
-                updates[`/lists/${listKey}/accessors/${shareToUid}`] = true;
-                return update(ref(db), updates);
-
-            }
-        }, {
-            onlyOnce: true
-        });
+        updateAccessorFirebase(db, storage, email, items, listKey, listName);
     }
 
     return (

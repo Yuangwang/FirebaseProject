@@ -1,16 +1,11 @@
-import { useRef, useEffect, useState } from 'react';
-import { initializeApp } from 'firebase/app';
-import { firebaseConfig } from '../configs';
-import { getDatabase, onValue } from 'firebase/database';
-import { uploadBytesResumable, ref, getDownloadURL } from 'firebase/storage'
-import { ref as dref } from 'firebase/database'
+import { useRef, useEffect, useState, useContext } from 'react';
 import styled from 'styled-components';
 import Form from 'react-bootstrap/Form';
+import { ServerContext } from '../App';
 import Button from 'react-bootstrap/Button';
 import ProgressBar from 'react-bootstrap/ProgressBar';
 import "./styles.css";
-
-
+import { getImageFirebase, uploadImageFirebase } from '../firebaseUtils';
 
 
 const TodoItemWrapper = styled.div`
@@ -31,61 +26,15 @@ function TodoItem({ storage, itemKey, items, editedItem, setEditedItem, setEditi
     const inputFile = useRef(null);
     const [uploadProgress, setUploadProgress] = useState(-1);
 
-
+    const { db } = useContext(ServerContext);
     const handleSubmit = (e) => {
         e.preventDefault()
         const file = inputFile?.current?.files[0];
         if (!file) return;
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-
-        // Get a reference to the database service
-        const db = getDatabase(app);
-        const accessorsRef = dref(db, `lists/${listKey}/accessors`);
-        onValue(accessorsRef, (snapshot) => {
-            const data = snapshot.val();
-            const storageRef = ref(storage, `images/${itemKey}`);
-            const metadata = {
-                customMetadata: {
-                    ...data
-                }
-            };
-            const uploadTask = uploadBytesResumable(storageRef, file, metadata);
-
-
-            uploadTask.on('state_changed',
-                (snapshot) => {
-                    // Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
-                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                    console.log('Upload is ' + progress + '% done');
-                    setUploadProgress(progress)
-                },
-                (error) => {
-                },
-                () => {
-                    getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-                        console.log('File available at', downloadURL);
-                    });
-                    setUploadProgress(100);
-
-                    setTimeout(() => {
-                        setUploadProgress(-1); window.location.reload()
-                    }, 500)
-                }
-            );
-        }, {
-            onlyOnce: true
-        });
+        uploadImageFirebase(db, storage, listKey, itemKey, file, setUploadProgress);
     }
     useEffect(() => {
-        const imageRef = ref(storage, `images/${itemKey}`);
-        getDownloadURL(imageRef)
-            .then((url) => {
-                const img = document.getElementById(`${itemKey}image`)
-                img.setAttribute('src', url);
-            })
-            .catch((error) => {
-            });
+        getImageFirebase(storage, itemKey);
     }, [])
 
     return (

@@ -1,14 +1,18 @@
-import { initializeApp } from 'firebase/app';
-import { useEffect, useState, useCallback } from 'react';
-import { getDatabase, ref, onValue, push, set, remove } from "firebase/database";
-import { getStorage, deleteObject, ref as sRef } from "firebase/storage";
-import { firebaseConfig } from "../configs"
+import { useEffect, useState, useCallback, useContext } from 'react';
 import TodoItem from './TodoItem';
 import EditingItem from './EditingItem'
 import NewItem from '../common/NewItem'
 import { useLocation } from 'react-router-dom'
 import ShareList from './ShareList';
 import styled from 'styled-components'
+import { ServerContext } from '../App';
+import { getCurrentListItemsFirebase, 
+  getCurrentListAccessorsFirebase, 
+  markItemCheckedFirebase, 
+  editItemNameFirebase, 
+  setEditingStateFirebase, 
+  addNewItemFirebase, 
+  deleteItemFirebase } from '../firebaseUtils';
 import ListGroup from 'react-bootstrap/ListGroup'
 
 
@@ -26,51 +30,29 @@ background-color: transparent;
 `
 
 function TodoList() {
+  const { db, storage } = useContext(ServerContext);
 
-
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-
-  // Get a reference to the database service
-  const db = getDatabase(app);
-
-  // Get a reference to the storage service
-  const storage = getStorage(app);
-
-  const location = useLocation()
-  const { listKey, listName } = location.state
+  const location = useLocation();
+  const { listKey, listName } = location.state;
   const [items, setItems] = useState([]);
   const [isloading, setIsloading] = useState(true);
   const [editedItem, setEditedItem] = useState()
   const [accessors, setAccessors] = useState();
 
   const setEditingItem = useCallback((itemKey, editing) => {
-    const todoItemCheckedRef = ref(db, `lists/${listKey}/items/${itemKey}/editing`)
-    set(todoItemCheckedRef, editing);
-  }, [db])
+    setEditingStateFirebase(db, listKey, itemKey, editing)
+  }, [db, listKey])
   const editListItemName = (itemKey, name) => {
-    const todoItemNameRef = ref(db, `lists/${listKey}/items/${itemKey}/name`)
-    set(todoItemNameRef, name);
+    editItemNameFirebase(db, listKey, itemKey, name);
   }
   const markItemChecked = (itemKey, checked) => {
-    const todoItemCheckedRef = ref(db, `lists/${listKey}/items/${itemKey}/checked`)
-    set(todoItemCheckedRef, checked);
+    markItemCheckedFirebase(db, listKey, itemKey, checked);
   }
   const addNewItem = (name) => {
-    const todoListRef = ref(db, `lists/${listKey}/items`)
-    const newItemRef = push(todoListRef);
-    set(newItemRef, { name, checked: false, editing: false });
+    addNewItemFirebase(db, listKey, name)
   }
   const deleteItem = (itemKey) => {
-    const currentItemRef = ref(db, `lists/${listKey}/items/${itemKey}`);
-    const imageRef = sRef(storage, `images/${itemKey}`);
-    remove(currentItemRef);
-    deleteObject(imageRef).then(() => {
-      // File deleted successfully
-    }).catch((error) => {
-      // Uh-oh, an error occurred!
-    });
-
+    deleteItemFirebase(db, storage, listKey, itemKey)
   }
   useEffect(() => {
     const cleanup = () => {
@@ -87,31 +69,9 @@ function TodoList() {
   }, [editedItem, setEditingItem])
 
   useEffect(() => {
-    const todolistRef = ref(db, `lists/${listKey}/items`);
-    onValue(todolistRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data == null) {
-        setItems([]);
-      } else {
-        setItems(data)
-      }
-      setIsloading(false);
-    });
-    const accessorsRef = ref(db, `lists/${listKey}/accessors`);
-    onValue(accessorsRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data == null) {
-        setAccessors([]);
-      } else {
-        const accountsToEmailRef = ref(db, `accounts_to_email`);
-        onValue(accountsToEmailRef, (snapshot) => {
-          const accountsToEmail = snapshot.val();
-
-          setAccessors(Object.keys(data).map(key => accountsToEmail[key].replaceAll(",", ".")))
-        });
-      }
-    });
-  }, [db])
+    getCurrentListItemsFirebase(db, listKey, setItems, setIsloading);
+    getCurrentListAccessorsFirebase(db, listKey, setAccessors);    
+  }, [db, listKey])
 
   return (
 
@@ -153,10 +113,7 @@ function TodoList() {
             )}
           </ul>
           <NewItem
-            addNewItem={addNewItem}
-            setEditingItem={setEditingItem}
-            editedItem={editedItem}
-            setEditedItem={setEditedItem} />
+            addNewItem={addNewItem} />
           <ShareList items={items} listKey={listKey} listName={listName} />
           <div>Shared with:</div>
           {accessors &&

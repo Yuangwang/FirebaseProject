@@ -1,9 +1,8 @@
-import { initializeApp } from 'firebase/app';
 import StyledFirebaseAuth from 'react-firebaseui/StyledFirebaseAuth';
-import { getAuth } from "firebase/auth";
-import { firebaseConfig, uiConfig } from "../configs"
+import { useContext } from 'react'
+import { uiConfig } from "../configs"
 import styled from "styled-components"
-
+import { ServerContext } from '../App';
 const Wrapper = styled.div`
     margin-top:200px;
     display:flex;
@@ -12,14 +11,14 @@ const Wrapper = styled.div`
 
 `
 function LoginPage() {
-
-    // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
+    const { auth } = useContext(ServerContext);
     return (
         <Wrapper>
             <h1>Welcome to Todo Collab</h1>
             <p>Please sign-in:</p>
-            <StyledFirebaseAuth uiConfig={uiConfig} firebaseAuth={getAuth(app)} />
+            {/* this is firebase auth specific, swap this out with other products auth, 
+            its responsible for showing the login box and calling onAuthStateChanged when auth state changes */}
+            <StyledFirebaseAuth uiConfig={uiConfig} firebaseAuth={auth} />
         </Wrapper>
     );
 }

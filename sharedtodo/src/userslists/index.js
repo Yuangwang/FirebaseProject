@@ -1,11 +1,10 @@
-import { initializeApp } from 'firebase/app';
-import { useEffect, useState } from 'react';
-import { getDatabase, ref, onValue, push, child, remove, update, set } from "firebase/database";
-import { firebaseConfig } from "../configs"
+import { useEffect, useState, useContext } from 'react';
+import { ServerContext } from '../App';
 import Card from 'react-bootstrap/Card';
 import NewItem from '../common/NewItem'
 import ListItem from './ListItem'
 import styled from "styled-components"
+import { getUsersViewableListsFirebase, addNewListFirebase } from '../firebaseUtils';
 import "./loader.css";
 
 
@@ -28,34 +27,23 @@ const CardWrapper = styled.div`
 `
 
 function UsersLists({ uid }) {
-
+  // list of lists the current user can see
+  // in the form of [{listKey1:{name:name1},{listKey2:{name:name2},...}]
   const [usersLists, setUsersLists] = useState([]);
   const [isloading, setIsloading] = useState(true);
 
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
 
   // Get a reference to the database service
-  const db = getDatabase(app);
-
+  const { db } = useContext(ServerContext);
   const addNewList = (name) => {
-    const newUsersListKey = push(ref(db, `/users/${uid}/lists`)).key;
-
-    const updates = {};
-    updates[`/users/${uid}/lists/${newUsersListKey}`] = { name };
-    updates[`/lists/${newUsersListKey}`] = { name, accessors: { [uid]: true } };
-    return update(ref(db), updates);
+    // handles firebase specific server logic to add a new list
+    addNewListFirebase(db, uid, name)
   }
 
   useEffect(() => {
-    const usersListsRef = ref(db, `users/${uid}/lists`);
-    onValue(usersListsRef, (snapshot) => {
-      setIsloading(false)
-      const data = snapshot.val();
-      if (data != null) {
-        setUsersLists(data);
-      }
-    });
+    // firebase implementation to get users lists, 
+    // this auto updates the page when new lists are added as well
+    getUsersViewableListsFirebase(db, uid, setUsersLists, setIsloading)
   }, [db, uid])
 
 
@@ -71,7 +59,7 @@ function UsersLists({ uid }) {
               </Wrapper>
               <CardWrapper>{Object.keys(usersLists).map(
                 (listKey) => {
-                  return <ListItem listKey={listKey} name={usersLists[listKey].name} collaborators={usersLists[listKey].accessors} />
+                  return <ListItem listKey={listKey} name={usersLists[listKey].name} />
                 })}
                 <div>
                   <Card style={{ height: '8rem', width: '18rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
