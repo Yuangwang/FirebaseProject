@@ -1,0 +1,20 @@
+type User @model @auth(rules: [{allow: public}]) {
+  id: ID!
+  email: String
+  lists: [List] @manyToMany(relationName: "UserList")
+}
+
+type ListItem @model @auth(rules: [{allow: public}]) {
+  id: ID!
+  checked: Boolean
+  editing: Boolean
+  name: String
+  listID: ID! @index(name: "byList")
+}
+
+type List @model @auth(rules: [{allow: public}]) {
+  id: ID!
+  name: String
+  listItems: [ListItem] @hasMany(indexName: "byList", fields: ["id"])
+  users: [User] @manyToMany(relationName: "UserList")
+}
