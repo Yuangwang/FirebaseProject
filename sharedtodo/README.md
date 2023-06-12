@@ -69,7 +69,6 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
 
-
 //firebase notes
 It is strange that web offline is not supported in RTDB since ios/android are both supported and ios/android/web offline are all supported in firestore
 Overall very easy to use RTDB
