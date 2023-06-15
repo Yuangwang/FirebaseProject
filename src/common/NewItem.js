@@ -9,7 +9,7 @@ function Newitem({ addNewItem }) {
     <>
       {isAddingNewitem ? (
         <>
-          <Form.Group style={{ "margin-bottom": "10px" }}>
+          <Form.Group style={{ "marginBottom": "10px" }}>
             <Form.Control
               placeholder="Enter new item name"
               value={newItemName}
@@ -19,10 +19,10 @@ function Newitem({ addNewItem }) {
           <div style={{ display: "flex", gap: "10px" }}>
             <Button
               variant="light"
-              onClick={() => {
+              onClick={async () => {
                 setIsAddingNewItem(false);
                 setNewItemName("");
-                addNewItem(newItemName);
+                await addNewItem(newItemName);
               }}
             >
               Done

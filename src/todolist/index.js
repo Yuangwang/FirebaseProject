@@ -6,15 +6,21 @@ import { useLocation } from "react-router-dom";
 import ShareList from "./ShareList";
 import styled from "styled-components";
 import { ServerContext } from "../App";
+// import {
+//   getCurrentListItemsFirebase,
+//   getCurrentListAccessorsFirebase,
+//   markItemCheckedFirebase,
+//   editItemNameFirebase,
+//   setEditingStateFirebase,
+//   addNewItemFirebase,
+//   deleteItemFirebase,
+// } from "../firebaseUtils";
 import {
-  getCurrentListItemsFirebase,
-  getCurrentListAccessorsFirebase,
-  markItemCheckedFirebase,
-  editItemNameFirebase,
-  setEditingStateFirebase,
-  addNewItemFirebase,
-  deleteItemFirebase,
-} from "../firebaseUtils";
+  getCurrentListItemsAws,
+  getCurrentListAccessorsAws,
+  addNewListItemAws,
+  setListItemStateEditingAws,
+} from "../awsUtils";
 import ListGroup from "react-bootstrap/ListGroup";
 
 const ListWrapper = styled.div`
@@ -41,22 +47,24 @@ function TodoList() {
   const [accessors, setAccessors] = useState();
 
   const setEditingItem = useCallback(
-    (itemKey, editing) => {
-      setEditingStateFirebase(db, listKey, itemKey, editing);
+    async (itemKey, editing) => {
+      // setEditingStateFirebase(db, listKey, itemKey, editing);
+      await setListItemStateEditingAws(db, itemKey, editing);
     },
     [db, listKey]
   );
   const editListItemName = (itemKey, name) => {
-    editItemNameFirebase(db, listKey, itemKey, name);
+    // editItemNameFirebase(db, listKey, itemKey, name);
   };
   const markItemChecked = (itemKey, checked) => {
-    markItemCheckedFirebase(db, listKey, itemKey, checked);
+    // markItemCheckedFirebase(db, listKey, itemKey, checked);
   };
-  const addNewItem = (name) => {
-    addNewItemFirebase(db, listKey, name);
+  const addNewItem = async (name) => {
+    // addNewItemFirebase(db, listKey, name);
+    await addNewListItemAws(db, listKey, name);
   };
   const deleteItem = (itemKey) => {
-    deleteItemFirebase(db, storage, listKey, itemKey);
+    // deleteItemFirebase(db, storage, listKey, itemKey);
   };
   useEffect(() => {
     const cleanup = () => {
@@ -73,9 +81,19 @@ function TodoList() {
   }, [editedItem, setEditingItem]);
 
   useEffect(() => {
-    getCurrentListItemsFirebase(db, listKey, setItems, setIsloading);
-    getCurrentListAccessorsFirebase(db, listKey, setAccessors);
-  }, [db, listKey]);
+    // getCurrentListItemsFirebase(db, listKey, setItems, setIsloading);
+    // getCurrentListAccessorsFirebase(db, listKey, setAccessors);
+    const doTheThing = async () => {
+      const listItems = await getCurrentListItemsAws(db, listKey);
+      setIsloading(false);
+      setItems(listItems);
+      console.log("listItems: " + JSON.stringify(listItems));
+      const accessors = await getCurrentListAccessorsAws(db, listKey);
+      console.log("accessors: " + JSON.stringify(accessors));
+      setAccessors(accessors);
+    };
+    doTheThing().then(() => {});
+  }, [listKey]);
 
   return (
     <ListWrapper>
@@ -89,6 +107,7 @@ function TodoList() {
               itemKey === editedItem ? (
                 <EditingItem
                   itemKey={itemKey}
+                  key={itemKey}
                   items={items}
                   setEditingItem={setEditingItem}
                   setEditedItem={setEditedItem}
@@ -105,6 +124,7 @@ function TodoList() {
               ) : (
                 <TodoItem
                   itemKey={itemKey}
+                  key={itemKey}
                   items={items}
                   setEditingItem={setEditingItem}
                   editedItem={editedItem}
@@ -123,7 +143,7 @@ function TodoList() {
           {accessors && (
             <ListGroup>
               {accessors.map((name) => (
-                <ListGroup.Item>{name}</ListGroup.Item>
+                <ListGroup.Item key={name}>{name}</ListGroup.Item>
               ))}
             </ListGroup>
           )}

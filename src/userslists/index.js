@@ -8,13 +8,19 @@ import {
   getUsersViewableListsFirebase,
   addNewListFirebase,
 } from "../firebaseUtils";
+import {
+  getCurrentUserAws,
+  getUsersViewableListsAws,
+  addNewListAws,
+  signUpUserAws,
+} from "../awsUtils";
 import "./loader.css";
 
 const Wrapper = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 30px;
+  marginbottom: 30px;
 `;
 const CardWrapper = styled.div`
   display: flex;
@@ -26,24 +32,46 @@ const CardWrapper = styled.div`
   flex-wrap: wrap;
 `;
 
-function UsersLists({ uid }) {
+function UsersLists() {
   // list of lists the current user can see
   // in the form of [{listKey1:{name:name1},{listKey2:{name:name2},...}]
   const [usersLists, setUsersLists] = useState([]);
   const [isloading, setIsloading] = useState(true);
+  const [uid, setUid] = useState(null);
 
   // Get a reference to the database service
-  const { db } = useContext(ServerContext);
+  const { auth, db } = useContext(ServerContext);
+
   const addNewList = (name) => {
     // handles firebase specific server logic to add a new list
-    addNewListFirebase(db, uid, name);
+    // addNewListFirebase(db, uid, name);
+
+    addNewListAws(db, uid, name);
   };
 
   useEffect(() => {
     // firebase implementation to get users lists,
     // this auto updates the page when new lists are added as well
-    getUsersViewableListsFirebase(db, uid, setUsersLists, setIsloading);
-  }, [db, uid]);
+    // getUsersViewableListsFirebase(db, uid, setUsersLists, setIsloading);
+    console.log(" running pull list uid: " + uid);
+    const doTheThing = async () => {
+      const user = await getCurrentUserAws(auth, db);
+      console.log("current user: " + user.id);
+      setUid(user.id);
+    };
+    doTheThing().then(() => {});
+  }, [uid]);
+
+  useEffect(() => {
+    if (uid === null) {
+      return;
+    }
+    getUsersViewableListsAws(db, uid).then((usersLists) => {
+      setIsloading(false);
+      console.log("fetched user lists: " + JSON.stringify(usersLists));
+      setUsersLists(usersLists);
+    });
+  }, [uid]);
 
   return (
     <>
@@ -67,6 +95,7 @@ function UsersLists({ uid }) {
                 {Object.keys(usersLists).map((listKey) => {
                   return (
                     <ListItem
+                      key={listKey}
                       listKey={listKey}
                       name={usersLists[listKey].name}
                     />

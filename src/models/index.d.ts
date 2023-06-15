@@ -1,10 +1,46 @@
 import { ModelInit, MutableModel, __modelMeta__, ManagedIdentifier } from "@aws-amplify/datastore";
 // @ts-ignore
-import { LazyLoading, LazyLoadingDisabled, AsyncCollection, AsyncItem } from "@aws-amplify/datastore";
+import { LazyLoading, LazyLoadingDisabled, AsyncItem, AsyncCollection } from "@aws-amplify/datastore";
 
 
 
 
+
+type EagerUserList = {
+  readonly [__modelMeta__]: {
+    identifier: ManagedIdentifier<UserList, 'id'>;
+    readOnlyFields: 'createdAt' | 'updatedAt';
+  };
+  readonly id: string;
+  readonly listName?: string | null;
+  readonly user?: User | null;
+  readonly list?: List | null;
+  readonly createdAt?: string | null;
+  readonly updatedAt?: string | null;
+  readonly userListUserId?: string | null;
+  readonly userListListId?: string | null;
+}
+
+type LazyUserList = {
+  readonly [__modelMeta__]: {
+    identifier: ManagedIdentifier<UserList, 'id'>;
+    readOnlyFields: 'createdAt' | 'updatedAt';
+  };
+  readonly id: string;
+  readonly listName?: string | null;
+  readonly user: AsyncItem<User | undefined>;
+  readonly list: AsyncItem<List | undefined>;
+  readonly createdAt?: string | null;
+  readonly updatedAt?: string | null;
+  readonly userListUserId?: string | null;
+  readonly userListListId?: string | null;
+}
+
+export declare type UserList = LazyLoading extends LazyLoadingDisabled ? EagerUserList : LazyUserList
+
+export declare const UserList: (new (init: ModelInit<UserList>) => UserList) & {
+  copyOf(source: UserList, mutator: (draft: MutableModel<UserList>) => MutableModel<UserList> | void): UserList;
+}
 
 type EagerUser = {
   readonly [__modelMeta__]: {
@@ -13,7 +49,6 @@ type EagerUser = {
   };
   readonly id: string;
   readonly email?: string | null;
-  readonly lists?: (UserList | null)[] | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -25,7 +60,6 @@ type LazyUser = {
   };
   readonly id: string;
   readonly email?: string | null;
-  readonly lists: AsyncCollection<UserList>;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -78,7 +112,6 @@ type EagerList = {
   readonly id: string;
   readonly name?: string | null;
   readonly listItems?: (ListItem | null)[] | null;
-  readonly users?: (UserList | null)[] | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -91,7 +124,6 @@ type LazyList = {
   readonly id: string;
   readonly name?: string | null;
   readonly listItems: AsyncCollection<ListItem>;
-  readonly users: AsyncCollection<UserList>;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -100,38 +132,4 @@ export declare type List = LazyLoading extends LazyLoadingDisabled ? EagerList :
 
 export declare const List: (new (init: ModelInit<List>) => List) & {
   copyOf(source: List, mutator: (draft: MutableModel<List>) => MutableModel<List> | void): List;
-}
-
-type EagerUserList = {
-  readonly [__modelMeta__]: {
-    identifier: ManagedIdentifier<UserList, 'id'>;
-    readOnlyFields: 'createdAt' | 'updatedAt';
-  };
-  readonly id: string;
-  readonly userId?: string | null;
-  readonly listId?: string | null;
-  readonly user: User;
-  readonly list: List;
-  readonly createdAt?: string | null;
-  readonly updatedAt?: string | null;
-}
-
-type LazyUserList = {
-  readonly [__modelMeta__]: {
-    identifier: ManagedIdentifier<UserList, 'id'>;
-    readOnlyFields: 'createdAt' | 'updatedAt';
-  };
-  readonly id: string;
-  readonly userId?: string | null;
-  readonly listId?: string | null;
-  readonly user: AsyncItem<User>;
-  readonly list: AsyncItem<List>;
-  readonly createdAt?: string | null;
-  readonly updatedAt?: string | null;
-}
-
-export declare type UserList = LazyLoading extends LazyLoadingDisabled ? EagerUserList : LazyUserList
-
-export declare const UserList: (new (init: ModelInit<UserList>) => UserList) & {
-  copyOf(source: UserList, mutator: (draft: MutableModel<UserList>) => MutableModel<UserList> | void): UserList;
 }

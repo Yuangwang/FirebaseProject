@@ -1,0 +1,12 @@
+{
+  "resourceName": "s3projectstoragebfec9e64",
+  "bucketName": "project-storage-bfec9e64",
+  "policyUUID": "21f6438c",
+  "storageAccess": "auth",
+  "guestAccess": [],
+  "authAccess": [
+    "CREATE_AND_UPDATE",
+    "READ",
+    "DELETE"
+  ]
+}

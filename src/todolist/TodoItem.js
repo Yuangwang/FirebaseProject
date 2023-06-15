@@ -6,6 +6,7 @@ import Button from "react-bootstrap/Button";
 import ProgressBar from "react-bootstrap/ProgressBar";
 import "./styles.css";
 import { getImageFirebase, uploadImageFirebase } from "../firebaseUtils";
+import { getImageUrlAws, uploadImageAws } from "../awsUtils";
 
 const TodoItemWrapper = styled.div`
   display: flex;
@@ -47,10 +48,8 @@ function TodoItem({
     e.preventDefault();
     const file = inputFile?.current?.files[0];
     if (!file) return;
-    uploadImageFirebase(
-      db,
+    uploadImageAws(
       storage,
-      listKey,
       itemKey,
       file,
       setUploadProgress,
@@ -59,11 +58,16 @@ function TodoItem({
   };
 
   useEffect(() => {
-    getImageFirebase(storage, itemKey, setDownloadUrlFor(itemKey));
+    const doTheThing = async () => {
+      const url = await getImageUrlAws(storage, itemKey);
+      console.log(`imageUrl: ${url}`);
+      setDownloadUrlFor(itemKey)(url);
+    };
+    doTheThing().then(() => {});
   }, []);
 
   return (
-    <li style={{ "list-style": "none" }} key={itemKey}>
+    <li style={{ listStyle: "none" }} key={itemKey}>
       {items[itemKey].editing ? (
         <div class="typingIndicatorContainer">
           <div class="typingIndicatorBubble">

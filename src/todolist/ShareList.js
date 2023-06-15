@@ -2,13 +2,15 @@ import { useState, useContext } from "react";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
 import { ServerContext } from "../App";
-import { updateAccessorFirebase } from "../firebaseUtils";
+// import { updateAccessorFirebase } from "../firebaseUtils";
+import { updateAccessorAws } from "../awsUtils";
 
 function ShareList({ items, listKey, listName }) {
   const { db, storage } = useContext(ServerContext);
   const [inputEmail, setInputEmail] = useState("");
-  const updateAccessors = (email) => {
-    updateAccessorFirebase(db, storage, email, items, listKey, listName);
+  const updateAccessors = async (email) => {
+    // updateAccessorFirebase(db, storage, email, items, listKey, listName);
+    await updateAccessorAws(db, email, listKey, listName);
   };
 
   return (
@@ -22,8 +24,8 @@ function ShareList({ items, listKey, listName }) {
       </Form.Group>
       <Button
         variant="light"
-        onClick={() => {
-          updateAccessors(inputEmail);
+        onClick={async () => {
+          await updateAccessors(inputEmail);
           setInputEmail("");
         }}
       >

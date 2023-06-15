@@ -11,9 +11,9 @@ function EditingItem({
 }) {
   const [newName, setNewName] = useState(items[itemKey].name);
   return (
-    <li style={{ "list-style": "none", margin: "20px" }} key={itemKey}>
+    <li style={{ "listStyle": "none", margin: "20px" }} key={itemKey}>
       <>
-        <Form.Group style={{ "margin-bottom": "10px" }}>
+        <Form.Group style={{ "marginBottom": "10px" }}>
           <Form.Control
             placeholder="Enter new item name"
             value={newName}
